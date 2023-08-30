@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 // This is a Solidity smart contract for a simple game where players can play and win rewards
 // The contract uses encryption to verify the data provided by the players
@@ -31,7 +32,7 @@ contract GameContract is EncryptionContract {
     constructor(
         uint256 _rewardPercent,
         uint256 _rewardAmount,
-        address _stakingToken,ls
+        address _stakingToken,
         address _stakingContract,
         bytes32 _secretKey
     ) EncryptionContract(_secretKey) {
