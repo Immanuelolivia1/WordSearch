@@ -34,8 +34,42 @@ export const GameplayProvider = (props) => {
   const [userBalance, setUserBalance] = useState(false);
   const [hasRolledDie, setHasRolledDie] = useState(false);
 
+  const POLYGON_TESTNET = {
+    chainId: 80001,
+    rpcUrls: ["https://matic-mumbai.chainstacklabs.com"],
+    chainName: "Polygon Testnet",
+    nativeCurrency: {
+      name: "tMATIC",
+      symbol: "tMATIC",
+      decimals: 18,
+    },
+    blockExplorerUrls: ["https://mumbai.polygonscan.com/"],
+  };
+  async function switchChain() {
+    const config = { ...POLYGON_TESTNET };
+
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: `0x${config.chainId.toString(16)}` }],
+      });
+    } catch (error) {
+      if (error.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [config],
+          });
+        } catch (addError) {
+          console.error(addError);
+        }
+      }
+    }
+  }
+
   async function connectToNetwork() {
     if (window.ethereum) {
+      await switchChain();
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       return provider;
@@ -191,6 +225,7 @@ export const GameplayProvider = (props) => {
 
       // Get the signer (connected account)
       const signer = provider.getSigner();
+      console.log(address);
 
       // Create a contract instance
       const FetchRandomWordsContract = new ethers.Contract(
@@ -198,27 +233,21 @@ export const GameplayProvider = (props) => {
         fetchRandomWordsabi,
         signer
       );
-      if (!hasRolledDie) {
-        const tx0 = await FetchRandomWordsContract.fetchDailyWord();
-        await tx0.wait(); // Await the transaction to be mined
-        const tx = await FetchRandomWordsContract.rollDice();
-        await tx.wait(); // Await the transaction to be mined
-        // Wait for 1 minutes
-        await new Promise((resolve) => setTimeout(resolve, 60000));
-        Swal.fire(
-          "Your die has rolled successfully, you can proceed to game play"
-        );
-        setHasRolledDie(true);
+      // const tx0 = await FetchRandomWordsContract.fetchDailyWord();
+      // await tx0.wait(); // Await the transaction to be mined
+      const tx = await FetchRandomWordsContract.rollDice(address);
+      await tx.wait(); // Await the transaction to be mined
+      Swal.fire("Your die is rolling, wait for minutes ");
+      // Wait for 1 minutes
+      await new Promise((resolve) => setTimeout(resolve, 60000));
+      Swal.fire(
+        "Your die has rolled successfully, you can proceed to game play"
+      );
+      setHasRolledDie(true);
+      router.push("/game");
+
+      if (hasRolledDie) {
         router.push("/game");
-      } else {
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: "you have rolled already",
-        });
-        if (hasRolledDie) {
-          router.push("/game");
-        }
       }
     } catch (error) {
       Swal.fire({
@@ -254,7 +283,7 @@ export const GameplayProvider = (props) => {
       //   alert("wait ended , game can begin");
       // }
 
-      const playersWord = await FetchRandomWordsContract.word();
+      const playersWord = await FetchRandomWordsContract.word(address);
       console.log("Players Word is ____", playersWord);
       setUserWordArray(playersWord);
       //begin game play with game contract
@@ -294,7 +323,7 @@ export const GameplayProvider = (props) => {
 
   const encryptLetter = (letter) => {
     const encodedLetter = ethers.utils.toUtf8Bytes(letter);
-    const secretKey = ethers.utils.formatBytes32String("W0RDS34CRH");
+    const secretKey = ethers.utils.formatBytes32String("BlockHeaderio1");
     const encodedSecretKey = ethers.utils.arrayify(secretKey);
     const saltedLetter = ethers.utils.concat([encodedLetter, encodedSecretKey]);
     const encryptedLetter = ethers.utils.keccak256(saltedLetter);
@@ -349,13 +378,13 @@ export const GameplayProvider = (props) => {
     setIsStarted(true);
   };
 
-  useEffect(() => {
-    if (address) {
-      callGetStakedToken();
-      callTotalStakedToken();
-      callGetUserBalance();
-    }
-  }, [address]);
+  // useEffect(() => {
+  //   if (address) {
+  //     callGetStakedToken();
+  //     callTotalStakedToken();
+  //     callGetUserBalance();
+  //   }
+  // }, [address]);
 
   return (
     <Gameplay.Provider

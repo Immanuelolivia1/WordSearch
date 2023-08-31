@@ -6,13 +6,9 @@ export default function HomeTopButtons() {
   const { rollYourDie, hasRolledDie } = useGameContext();
 
   const makeWordRequest = async () => {
-    if (!hasRolledDie) {
-      setCountDown(300);
-      beginCountdown();
-      await rollYourDie();
-    }
-
-    alert("already requested");
+    setCountDown(300);
+    beginCountdown();
+    await rollYourDie();
   };
 
   const beginCountdown = () => {

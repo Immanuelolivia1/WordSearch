@@ -74,9 +74,7 @@ contract VRFD20 is VRFConsumerBaseV2, EncryptionContract {
      *
      * @param roller address of the roller
      */
-    function rollDice(
-        address roller
-    ) public onlyOwner returns (uint256 requestId) {
+    function rollDice(address roller) public returns (uint256 requestId) {
         require(
             block.timestamp >= s_lastRequestTime[roller] + 1 days,
             "Can only request once per day"
@@ -401,10 +399,5 @@ contract VRFD20 is VRFConsumerBaseV2, EncryptionContract {
             "turns"
         ];
         return words[id - 1];
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == s_owner);
-        _;
     }
 }
